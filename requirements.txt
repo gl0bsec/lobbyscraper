@@ -1,0 +1,8 @@
+# Basic requirements for downloading feedback
+requests>=2.25.0
+
+# Optional: Document conversion to markdown
+# Requires Pandoc to be installed system-wide
+# Ubuntu/Debian: sudo apt-get install pandoc
+# macOS: brew install pandoc
+# Windows: https://pandoc.org/installing.html

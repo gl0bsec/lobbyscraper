@@ -1,0 +1,58 @@
+[build-system]
+requires = ["setuptools>=45", "wheel", "setuptools_scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "eu-lobbyscraper"
+version = "1.0.0"
+description = "Download and convert public consultation feedback from EU Better Regulation Portal"
+readme = "README.md"
+requires-python = ">=3.6"
+license = {text = "MIT"}
+authors = [
+    {name = "EU Lobbyscraper Contributors"}
+]
+keywords = ["eu", "european-union", "lobbying", "consultation", "feedback", "scraper", "pandoc", "markdown"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+]
+
+dependencies = [
+    "requests>=2.25.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=6.0",
+    "black>=21.0",
+    "flake8>=3.9",
+]
+
+[project.scripts]
+eu-lobbyscraper-download = "eu_lobbyscraper.cli:download_cli"
+eu-lobbyscraper-convert = "eu_lobbyscraper.cli:convert_cli"
+eu-lobbyscraper-batch-convert = "eu_lobbyscraper.cli:batch_convert_cli"
+
+[project.urls]
+Homepage = "https://github.com/yourusername/eu-lobbyscraper"
+Documentation = "https://github.com/yourusername/eu-lobbyscraper"
+Repository = "https://github.com/yourusername/eu-lobbyscraper"
+"Bug Tracker" = "https://github.com/yourusername/eu-lobbyscraper/issues"
+
+[tool.setuptools]
+packages = ["eu_lobbyscraper"]
+
+[tool.setuptools.package-data]
+eu_lobbyscraper = ["*.md"]
