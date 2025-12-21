@@ -48,6 +48,7 @@ venv.bak/
 initiative_*/
 selected_downloads/
 data/
+engine/
 *.json
 *.csv
 !docs/*.json
