@@ -23,8 +23,15 @@ def batch_convert_cli():
     sys.exit(main())
 
 
+def list_cli():
+    """Entry point for eu-lobbyscraper-list command"""
+    from eu_lobbyscraper.lister_cli import main
+    sys.exit(main())
+
+
 if __name__ == "__main__":
     print("Use one of the following commands:")
     print("  eu-lobbyscraper-download        - Download initiative feedback")
-    print("  eu-lobbyscraper-convert          - Convert single document")
-    print("  eu-lobbyscraper-batch-convert    - Batch convert attachments")
+    print("  eu-lobbyscraper-convert         - Convert single document")
+    print("  eu-lobbyscraper-batch-convert   - Batch convert attachments")
+    print("  eu-lobbyscraper-list            - List all initiatives")

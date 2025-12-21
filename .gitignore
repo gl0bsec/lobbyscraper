@@ -1,6 +1,7 @@
 # Claude Code
 .claude/
 .claude*
+CLAUDE.md
 
 # Python
 __pycache__/
@@ -46,6 +47,11 @@ venv.bak/
 # Project-specific: Downloaded initiative data
 initiative_*/
 selected_downloads/
+data/
+*.json
+*.csv
+!docs/*.json
+!docs/*.csv
 
 # Temporary files
 *.tmp

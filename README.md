@@ -4,6 +4,7 @@ A Python package for bulk downloading and converting public consultation feedbac
 
 ## Features
 
+- **List all initiatives** - Download metadata for all ~3,800+ initiatives from the portal
 - Downloads all feedback metadata including submitter information, organizations, dates, and feedback text
 - Downloads all PDF, DOCX, and other file attachments
 - Converts documents to markdown format using Pandoc (PDF, Word, Excel, PowerPoint, EPUB, HTML, and more)
@@ -29,7 +30,13 @@ pip install -e .
 ### Basic Usage
 
 ```bash
-# Download feedback (metadata only)
+# List all initiatives (get metadata for all ~3,800+ initiatives)
+eu-lobbyscraper-list
+
+# Export to CSV
+eu-lobbyscraper-list --csv initiatives.csv
+
+# Download feedback for a specific initiative (metadata only)
 eu-lobbyscraper-download 14855
 
 # Download with attachments
@@ -48,7 +55,11 @@ eu-lobbyscraper-batch-convert initiative_14855_feedback
 ### Use as Python Package
 
 ```python
-from eu_lobbyscraper import EUFeedbackDownloader, DocumentConverter
+from eu_lobbyscraper import EUFeedbackDownloader, DocumentConverter, EUInitiativeLister
+
+# List all initiatives
+lister = EUInitiativeLister(output_file="initiatives.json")
+lister.list_all(topic="CLIMA", csv_output="initiatives.csv")
 
 # Download initiative feedback
 downloader = EUFeedbackDownloader(
@@ -61,15 +72,6 @@ downloader.download_all()
 # Convert documents
 converter = DocumentConverter()
 converter.convert_to_markdown("document.pdf", extract_media=True)
-```
-
-### Use as Standalone Scripts (Without Installation)
-
-```bash
-pip install requests  # Only dependency
-python3 download_initiative_feedback.py 14855 --download-attachments
-python3 document_converter.py document.pdf
-python3 convert_attachments_to_markdown.py initiative_14855_feedback
 ```
 
 ## Requirements
@@ -96,6 +98,24 @@ pandoc --version
 ```
 
 ## Command-Line Tools
+
+### eu-lobbyscraper-list
+
+List all initiatives from the portal (NEW!)
+
+```bash
+eu-lobbyscraper-list [OPTIONS]
+
+Options:
+  -o, --output FILE        Output JSON file (default: all_initiatives.json)
+  --csv FILE               Output CSV file (optional)
+  --download-feedback      Download all feedback metadata (WARNING: very slow)
+  --topic TOPIC            Filter by topic code (e.g., CLIMA, TRADE)
+  --status STATUS          Filter by status (e.g., ACTIVE)
+  --max N                  Maximum number of initiatives to fetch
+  --no-stats               Don't include statistics
+  --quiet                  Suppress console output
+```
 
 ### eu-lobbyscraper-download
 
@@ -141,6 +161,41 @@ Options:
   -v, --verbose            Verbose output
 ```
 
+## Listing All Initiatives
+
+**NEW**: Fetch metadata for all ~3,800+ initiatives from the portal in one command:
+
+```bash
+# List all initiatives with JSON output
+eu-lobbyscraper-list
+
+# Export to CSV (spreadsheet-friendly)
+eu-lobbyscraper-list --csv initiatives.csv
+
+# Export to both JSON and CSV
+eu-lobbyscraper-list -o initiatives.json --csv initiatives.csv
+
+# Filter by topic
+eu-lobbyscraper-list --topic CLIMA -o climate_initiatives.json
+
+# Download ALL feedback metadata for each initiative (WARNING: very slow)
+eu-lobbyscraper-list --max 10 --download-feedback
+
+# Test with first 100 initiatives
+eu-lobbyscraper-list --max 100
+```
+
+**Output formats:**
+- **JSON**: Full metadata with statistics and enriched fields
+- **CSV**: Spreadsheet-friendly format with key fields (ID, URL, title, topics, feedback status, dates)
+
+**Optional feedback download:**
+- Use `--download-feedback` to download all feedback metadata for each initiative
+- Includes feedback text, submitter info, organizations, countries, dates
+- WARNING: Much slower (2-5 seconds per initiative, ~3-6 hours for all initiatives)
+
+See [docs/LISTING_INITIATIVES.md](docs/LISTING_INITIATIVES.md) for detailed documentation and examples.
+
 ## Finding Initiative IDs
 
 Initiative IDs can be found in the URL of any initiative page:
@@ -151,6 +206,33 @@ https://ec.europa.eu/info/law/better-regulation/have-your-say/initiatives/14855-
 ```
 
 The initiative ID is `14855`.
+
+You can also use `eu-lobbyscraper-list` to discover initiatives by topic or status.
+
+## Project Structure
+
+```
+lobbyscraper/
+├── eu_lobbyscraper/              # Python package
+│   ├── __init__.py               # Package initialization and exports
+│   ├── cli.py                    # CLI entry points
+│   ├── downloader.py             # Initiative feedback downloader
+│   ├── lister.py                 # Initiative lister module
+│   ├── lister_cli.py             # Lister CLI wrapper
+│   ├── converter.py              # Document converter
+│   └── batch_converter.py        # Batch conversion utilities
+├── examples/                     # Example usage scripts
+│   ├── example_list_and_download.py
+│   └── example_download_from_metadata.py
+├── docs/                         # Documentation
+│   ├── LISTING_INITIATIVES.md
+│   └── FEATURES_SUMMARY.md
+├── data/                         # Downloaded data (gitignored)
+├── README.md
+├── CLAUDE.md
+├── setup.py
+└── requirements.txt
+```
 
 ## Output Structure
 
@@ -180,6 +262,26 @@ All formats are converted natively by Pandoc:
 - **LaTeX**: `.tex`, `.latex`
 
 ## Python API
+
+### EUInitiativeLister
+
+```python
+from eu_lobbyscraper import EUInitiativeLister
+
+lister = EUInitiativeLister(
+    output_file="initiatives.json",      # Output JSON file
+    verbose=True,                        # Print progress
+    download_feedback=False              # Download all feedback metadata
+)
+
+# List all initiatives
+lister.list_all(
+    topic="CLIMA",                      # Optional: filter by topic
+    status="ACTIVE",                     # Optional: filter by status
+    max_initiatives=100,                # Optional: limit results
+    csv_output="initiatives.csv"        # Optional: also export to CSV
+)
+```
 
 ### EUFeedbackDownloader
 
@@ -262,7 +364,7 @@ eu-lobbyscraper-download 14855 \
 eu-lobbyscraper-download 14855 --download-attachments
 
 # Step 2: Convert later
-eu-lobbyscraper-batch-convert initiative_14855_feedback --extract-media
+eu-lobbyscraper-batch-convert data/initiative_14855_feedback --extract-media
 ```
 
 ### Selective Conversion in Python
@@ -273,7 +375,7 @@ from pathlib import Path
 import json
 
 # Load metadata
-with open('initiative_14855_feedback/consolidated_feedback.json') as f:
+with open('data/initiative_14855_feedback/consolidated_feedback.json') as f:
     data = json.load(f)
 
 # Convert only documents from specific organizations
@@ -282,7 +384,7 @@ for item in data['feedback']:
     org = item['feedback'].get('organization')
     if org == 'DIGITALEUROPE':
         pub_id = item['publication_id']
-        batch.convert_publication(f"initiative_14855_feedback/publication_{pub_id}")
+        batch.convert_publication(f"data/initiative_14855_feedback/publication_{pub_id}")
 ```
 
 ## Development
@@ -353,6 +455,7 @@ find . -type d -name __pycache__ -exec rm -rf {} +
 
 The tool interacts with these EU Better Regulation Portal endpoints:
 
+- `GET /brpapi/searchInitiatives?page={page}&size={size}` - List all initiatives (paginated)
 - `GET /brpapi/groupInitiatives/{id}` - Initiative metadata
 - `GET /api/allFeedback?publicationId={pub_id}&page={page}&size={size}` - Feedback (paginated)
 - `GET /api/download/{documentId}` - Binary attachment downloads

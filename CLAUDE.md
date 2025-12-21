@@ -6,13 +6,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a Python-based tool for bulk downloading feedback metadata and attachments from the EU Better Regulation Portal (https://ec.europa.eu/info/law/better-regulation/have-your-say/). The tool scrapes public consultation feedback for legislative initiatives using the Better Regulation Portal API.
 
-**New Feature**: The tool now includes document-to-markdown conversion capabilities using Pandoc, a universal document converter that handles PDF, Office documents, and many other formats natively.
+**Key Capabilities**:
+1. **List all initiatives** - `eu-lobbyscraper-list` CLI command
+2. **Download initiative feedback** - `eu-lobbyscraper-download` CLI command
+3. **Document conversion** - Convert downloaded attachments to Markdown using Pandoc
+
+**Project Structure**:
+- `eu_lobbyscraper/` - Python package with all core modules and CLI entry points
+- `examples/` - Example usage scripts
+- `docs/` - Documentation files
+- `data/` - Downloaded data (gitignored)
 
 ## Core Architecture
 
-### Main Script: `download_initiative_feedback.py`
+### Main Module: `eu_lobbyscraper/downloader.py`
 
-The codebase centers around the `EUFeedbackDownloader` class, which handles the complete download workflow:
+The codebase centers around the `EUFeedbackDownloader` class in `eu_lobbyscraper/downloader.py`, which handles the complete download workflow:
 
 1. **Initiative Metadata Fetching** (`get_initiative_data`): Retrieves top-level initiative information from `/brpapi/groupInitiatives/{id}` endpoint
 2. **Feedback Pagination** (`get_all_feedback`): Iterates through paginated feedback using `/api/allFeedback?publicationId={pub_id}&page={page}&size={size}`, handling 100 items per page
@@ -32,19 +41,19 @@ The codebase centers around the `EUFeedbackDownloader` class, which handles the 
 
 The tool includes three additional modules for document conversion:
 
-1. **`document_converter.py`**: Core conversion module with `DocumentConverter` class
+1. **`eu_lobbyscraper/converter.py`**: Core conversion module with `DocumentConverter` class
    - Uses Pandoc for universal document conversion
    - Supports PDF, DOCX, XLSX, PPTX, EPUB, HTML, and many more formats
    - Native conversion without intermediate steps
    - Optional media extraction
 
-2. **`convert_attachments_to_markdown.py`**: Batch conversion script
+2. **`eu_lobbyscraper/batch_converter.py`**: Batch conversion module with `AttachmentMarkdownConverter` class
    - Processes entire initiative directories
    - Selective publication processing
    - Skip already-converted files
    - Comprehensive statistics reporting
 
-3. **Integration in `download_initiative_feedback.py`**:
+3. **Integration in the downloader**:
    - `--convert-to-markdown` flag for automatic conversion during download
    - `--extract-media` flag to extract images and embedded media
    - Optional converter initialization only when needed
@@ -67,65 +76,49 @@ Initiative ID → Initiative Metadata (JSON) → Publications List
 
 ### Output Structure
 
+Downloaded data is saved to the `data/` directory by default:
+
 ```
-initiative_{id}_feedback/
-├── initiative_metadata.json          # Top-level initiative details
-├── consolidated_feedback.json        # All feedback from all publications
-├── publication_{pub_id}/
-│   ├── feedback_metadata.json        # Array of all feedback with downloadUrl fields
-│   ├── summary.json                  # Statistics (total feedback, attachments)
-│   └── attachments/
-│       ├── feedback_{id}_{filename}      # Downloaded files (if --download-attachments used)
-│       └── feedback_{id}_{filename}.md   # Markdown conversions (if --convert-to-markdown used)
+data/
+├── initiative_{id}_feedback/
+│   ├── initiative_metadata.json          # Top-level initiative details
+│   ├── consolidated_feedback.json        # All feedback from all publications
+│   └── publication_{pub_id}/
+│       ├── feedback_metadata.json        # Array of all feedback with downloadUrl fields
+│       ├── summary.json                  # Statistics (total feedback, attachments)
+│       └── attachments/
+│           ├── feedback_{id}_{filename}      # Downloaded files (if --download-attachments used)
+│           └── feedback_{id}_{filename}.md   # Markdown conversions (if --convert-to-markdown used)
+├── all_initiatives.json              # List of all initiatives
+└── initiatives.csv                   # CSV export of initiatives
 ```
 
 ## Common Commands
 
+### Listing All Initiatives
+
+```bash
+eu-lobbyscraper-list
+eu-lobbyscraper-list --topic CLIMA -o data/climate_initiatives.json
+eu-lobbyscraper-list --max 100 --csv data/test.csv
+```
+
 ### Running the Downloader
 
-**Metadata only (no file downloads):**
 ```bash
-python3 download_initiative_feedback.py <initiative_id>
-```
-
-**Metadata + all attachments:**
-```bash
-python3 download_initiative_feedback.py <initiative_id> --download-attachments
-```
-
-**Custom output directory:**
-```bash
-python3 download_initiative_feedback.py <initiative_id> -o <output_dir> [--download-attachments]
-```
-
-**Metadata + attachments + markdown conversion:**
-```bash
-python3 download_initiative_feedback.py <initiative_id> --download-attachments --convert-to-markdown
-```
-
-**Extract images and media when converting documents:**
-```bash
-python3 download_initiative_feedback.py <initiative_id> --download-attachments --convert-to-markdown --extract-media
+eu-lobbyscraper-download <initiative_id>
+eu-lobbyscraper-download <initiative_id> --download-attachments
+eu-lobbyscraper-download <initiative_id> --download-attachments --convert-to-markdown
+eu-lobbyscraper-download <initiative_id> --download-attachments --convert-to-markdown --extract-media
 ```
 
 ### Document Conversion Commands
 
-**Convert a single document:**
 ```bash
-python3 document_converter.py document.pdf
-python3 document_converter.py report.docx -o output.md
-```
-
-**Batch convert existing attachments:**
-```bash
-# Convert all attachments in an initiative
-python3 convert_attachments_to_markdown.py initiative_14855_feedback
-
-# Convert specific publication
-python3 convert_attachments_to_markdown.py initiative_14855_feedback -p 20401
-
-# Convert all initiative directories
-python3 convert_attachments_to_markdown.py --all
+eu-lobbyscraper-convert document.pdf
+eu-lobbyscraper-convert report.docx -o output.md
+eu-lobbyscraper-batch-convert data/initiative_14855_feedback
+eu-lobbyscraper-batch-convert data/initiative_14855_feedback -p 20401
 ```
 
 ### Dependencies
@@ -150,8 +143,9 @@ pandoc --version
 
 ## API Endpoints
 
-The script interacts with these EU Better Regulation Portal endpoints:
+The package interacts with these EU Better Regulation Portal endpoints:
 
+- `GET /brpapi/searchInitiatives?page={page}&size={size}` - List all initiatives (paginated, used by lister module)
 - `GET /brpapi/groupInitiatives/{id}` - Initiative metadata
 - `GET /api/allFeedback?publicationId={pub_id}&page={page}&size={size}` - Feedback items (paginated)
 - `GET /api/download/{documentId}` - Binary attachment downloads
@@ -162,6 +156,14 @@ All endpoints use base URL: `https://ec.europa.eu/info/law/better-regulation`
 
 ### Finding Initiative IDs
 
+**Method 1: List all initiatives**
+Use the lister to discover initiatives by topic, status, or browse all:
+```bash
+eu-lobbyscraper-list
+eu-lobbyscraper-list --topic CLIMA
+```
+
+**Method 2: Extract from URLs**
 Extract the numeric ID from Better Regulation Portal URLs:
 ```
 https://ec.europa.eu/info/law/better-regulation/have-your-say/initiatives/14855-Simplification-digital-package-and-omnibus_en
@@ -174,7 +176,7 @@ The `EUFeedbackDownloader` uses `requests.Session()` with a Mozilla User-Agent t
 
 ### Metadata-Driven Workflows
 
-The `downloadUrl` field injected into attachment metadata enables selective post-processing. See `example_download_from_metadata.py` for filtering patterns:
+The `downloadUrl` field injected into attachment metadata enables selective post-processing. See `examples/example_download_from_metadata.py` for filtering patterns:
 - Download by organization name
 - Filter by file size or type
 - Select based on country or user type

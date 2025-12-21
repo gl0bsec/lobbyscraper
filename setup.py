@@ -45,6 +45,7 @@ setup(
             "eu-lobbyscraper-download=eu_lobbyscraper.cli:download_cli",
             "eu-lobbyscraper-convert=eu_lobbyscraper.cli:convert_cli",
             "eu-lobbyscraper-batch-convert=eu_lobbyscraper.cli:batch_convert_cli",
+            "eu-lobbyscraper-list=eu_lobbyscraper.cli:list_cli",
         ],
     },
     classifiers=[
