@@ -26,6 +26,9 @@ Examples:
   # Download all feedback metadata (WARNING: slow)
   eu-lobbyscraper-list --max 10 --download-feedback
 
+  # Only count feedback responses (fast)
+  eu-lobbyscraper-list --count-feedback-only
+
   # Filter by topic
   eu-lobbyscraper-list --topic CLIMA
 
@@ -45,6 +48,8 @@ Available topic codes:
                        help='Output CSV file (optional, e.g., initiatives.csv)')
     parser.add_argument('--download-feedback', action='store_true',
                        help='Download all feedback metadata for each initiative (WARNING: very slow)')
+    parser.add_argument('--count-feedback-only', action='store_true',
+                       help='Only count feedback responses without downloading items (fast, adds totalFeedbackCount column)')
     parser.add_argument('--status', type=str,
                        help='Filter by initiative status (e.g., ACTIVE)')
     parser.add_argument('--topic', type=str,
@@ -64,7 +69,8 @@ Available topic codes:
         lister = EUInitiativeLister(
             output_file=args.output,
             verbose=not args.quiet,
-            download_feedback=args.download_feedback
+            download_feedback=args.download_feedback,
+            count_feedback_only=args.count_feedback_only
         )
 
         lister.list_all(

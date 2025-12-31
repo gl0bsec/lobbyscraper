@@ -112,31 +112,15 @@ class AttachmentMarkdownConverter:
                 self.stats['failed'] += 1
                 print(f"    {message}")
 
-    def convert_publication(self, publication_dir: str, force: bool = False):
-        """Convert all attachments in a publication directory"""
-        pub_path = Path(publication_dir)
-
-        if not pub_path.exists():
-            print(f"Publication directory not found: {publication_dir}")
-            return
-
-        # Check for attachments subdirectory
-        attachments_dir = pub_path / "attachments"
-        if not attachments_dir.exists():
-            print(f"No attachments directory found in: {publication_dir}")
-            return
-
-        self.convert_attachments_directory(str(attachments_dir), force)
-
     def convert_initiative(self, initiative_dir: str, force: bool = False,
                          publications: List[str] = None):
         """
-        Convert all attachments in an initiative directory
+        Convert all attachments in an initiative directory (flat structure)
 
         Args:
-            initiative_dir: Path to initiative directory
+            initiative_dir: Path to initiative directory (e.g., feedback_data/14855)
             force: Force reconversion of existing markdown files
-            publications: Optional list of specific publication IDs to process
+            publications: Optional list of specific publication IDs to filter by
         """
         init_path = Path(initiative_dir)
 
@@ -148,24 +132,55 @@ class AttachmentMarkdownConverter:
         print(f"Converting Initiative: {init_path.name}")
         print(f"{'='*70}")
 
-        # Find all publication directories
-        pub_dirs = [d for d in init_path.iterdir()
-                   if d.is_dir() and d.name.startswith('publication_')]
+        # Check for index.json to get file list
+        index_file = init_path / "index.json"
+        if index_file.exists():
+            with open(index_file, 'r', encoding='utf-8') as f:
+                index_data = json.load(f)
 
-        if not pub_dirs:
-            print("No publication directories found")
-            return
+            # Filter by publications if requested
+            files_to_convert = index_data.get('files', [])
+            if publications:
+                pub_ids = [int(p) for p in publications]
+                files_to_convert = [f for f in files_to_convert
+                                   if f.get('publication_id') in pub_ids]
 
-        # Filter by specific publications if requested
-        if publications:
-            pub_dirs = [d for d in pub_dirs
-                       if any(f"publication_{pub_id}" == d.name for pub_id in publications)]
+            convertible_files = [
+                init_path / f['filename']
+                for f in files_to_convert
+                if self.converter.can_convert(str(init_path / f['filename']))
+            ]
 
-        print(f"Found {len(pub_dirs)} publication(s) to process\n")
+            print(f"  Found {len(convertible_files)} convertible files from index\n")
+        else:
+            # Fallback: scan directory for all files
+            print("  No index.json found, scanning directory...\n")
+            all_files = [f for f in init_path.iterdir() if f.is_file() and f.suffix not in ['.json']]
+            convertible_files = [
+                f for f in all_files
+                if self.converter.can_convert(str(f))
+            ]
+            print(f"  Found {len(convertible_files)} convertible files\n")
 
-        # Process each publication
-        for pub_dir in pub_dirs:
-            self.convert_publication(str(pub_dir), force)
+        # Convert each file
+        for file_path in convertible_files:
+            self.stats['total_files'] += 1
+            print(f"  [{self.stats['total_files']}/{len(convertible_files)}] {file_path.name}")
+
+            success, message = self.convert_file(str(file_path), force)
+
+            if success:
+                self.stats['converted'] += 1
+                print(f"    {message}")
+            elif "Already converted" in message:
+                self.stats['skipped'] += 1
+                print(f"    ⊘ {message}")
+            elif "Unsupported" in message:
+                self.stats['unsupported'] += 1
+                self._log(f"    {message}")
+            else:
+                self.stats['failed'] += 1
+                print(f"    {message}")
 
         # Print summary
         self._print_summary()
@@ -183,11 +198,13 @@ class AttachmentMarkdownConverter:
         print(f"{'='*70}\n")
 
 
-def find_initiative_directories(base_dir: str = '.') -> List[str]:
+def find_initiative_directories(base_dir: str = 'feedback_data') -> List[str]:
     """Find all initiative directories in base directory"""
     base_path = Path(base_dir)
+    if not base_path.exists():
+        return []
     return [str(d) for d in base_path.iterdir()
-            if d.is_dir() and d.name.startswith('initiative_')]
+            if d.is_dir() and d.name.isdigit()]
 
 
 def main():
@@ -197,21 +214,21 @@ def main():
         epilog="""
 Examples:
   # Convert all attachments in an initiative
-  python convert_attachments_to_markdown.py initiative_14855_feedback
+  python convert_attachments_to_markdown.py feedback_data/14855
 
   # Convert specific publication only
-  python convert_attachments_to_markdown.py initiative_14855_feedback -p 20401
+  python convert_attachments_to_markdown.py feedback_data/14855 -p 21325
 
   # Convert multiple publications
-  python convert_attachments_to_markdown.py initiative_14855_feedback -p 20401 20402
+  python convert_attachments_to_markdown.py feedback_data/14855 -p 21325 21346
 
   # Force reconversion of existing markdown files
-  python convert_attachments_to_markdown.py initiative_14855_feedback --force
+  python convert_attachments_to_markdown.py feedback_data/14855 --force
 
   # Extract images and media from documents
-  python convert_attachments_to_markdown.py initiative_14855_feedback --extract-media
+  python convert_attachments_to_markdown.py feedback_data/14855 --extract-media
 
-  # Process all initiative directories in current folder
+  # Process all initiative directories in feedback_data folder
   python convert_attachments_to_markdown.py --all
 
 Requirements:
@@ -232,11 +249,11 @@ Supported formats:
     )
 
     parser.add_argument('initiative_dir', nargs='?',
-                       help='Initiative directory (e.g., initiative_14855_feedback)')
+                       help='Initiative directory (e.g., feedback_data/14855)')
     parser.add_argument('-p', '--publications', nargs='+',
                        help='Specific publication IDs to process (default: all)')
     parser.add_argument('--all', action='store_true',
-                       help='Process all initiative directories in current folder')
+                       help='Process all initiative directories in feedback_data folder')
     parser.add_argument('--force', action='store_true',
                        help='Force reconversion even if markdown exists')
     parser.add_argument('--extract-media', action='store_true',

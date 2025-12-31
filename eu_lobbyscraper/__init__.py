@@ -13,10 +13,16 @@ from .downloader import EUFeedbackDownloader
 from .converter import DocumentConverter
 from .batch_converter import AttachmentMarkdownConverter
 from .lister import EUInitiativeLister
+from .json_to_csv import FeedbackJSONToCSVConverter
+from .match_organizations import OrganizationMatcher
+from .cooccurrence_analyzer import CooccurrenceAnalyzer
 
 __all__ = [
     "EUFeedbackDownloader",
     "DocumentConverter",
     "AttachmentMarkdownConverter",
     "EUInitiativeLister",
+    "FeedbackJSONToCSVConverter",
+    "OrganizationMatcher",
+    "CooccurrenceAnalyzer",
 ]

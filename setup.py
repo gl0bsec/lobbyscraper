@@ -46,6 +46,9 @@ setup(
             "eu-lobbyscraper-convert=eu_lobbyscraper.cli:convert_cli",
             "eu-lobbyscraper-batch-convert=eu_lobbyscraper.cli:batch_convert_cli",
             "eu-lobbyscraper-list=eu_lobbyscraper.cli:list_cli",
+            "eu-lobbyscraper-json-to-csv=eu_lobbyscraper.cli:json_to_csv_cli",
+            "eu-lobbyscraper-match-orgs=eu_lobbyscraper.cli:match_orgs_cli",
+            "eu-lobbyscraper-cooccurrence=eu_lobbyscraper.cli:cooccurrence_cli",
         ],
     },
     classifiers=[

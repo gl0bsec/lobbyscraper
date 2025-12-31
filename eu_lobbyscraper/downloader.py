@@ -33,7 +33,7 @@ class EUFeedbackDownloader:
     def __init__(self, initiative_id, output_dir=None, download_attachments=True,
                  convert_to_markdown=False, extract_media=False):
         self.initiative_id = initiative_id
-        self.output_dir = output_dir or f"initiative_{initiative_id}_feedback"
+        self.output_dir = output_dir or f"feedback_data/{initiative_id}"
         self.download_attachments = download_attachments
         self.convert_to_markdown = convert_to_markdown
         self.extract_media = extract_media
@@ -42,7 +42,8 @@ class EUFeedbackDownloader:
         self.session.headers.update({
             'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36'
         })
-        self.all_feedback_consolidated = []  # Store all feedback for consolidated output
+        self.file_index = []  # Store file metadata for index.json
+        self.download_results = []  # Store download results
 
         # Initialize converter if requested
         self.converter = None
@@ -63,12 +64,10 @@ class EUFeedbackDownloader:
 
         data = response.json()
 
-        # Save initiative metadata
-        metadata_file = os.path.join(self.output_dir, "initiative_metadata.json")
-        with open(metadata_file, 'w', encoding='utf-8') as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
+        # Store for later use (will be saved in index.json)
+        self.initiative_data = data
 
-        print(f"✓ Saved initiative metadata to {metadata_file}")
+        print(f"✓ Retrieved initiative metadata")
         print(f"  Title: {data.get('shortTitle', 'N/A')}")
         print(f"  Reference: {data.get('reference', 'N/A')}")
 
@@ -122,7 +121,7 @@ class EUFeedbackDownloader:
 
         return all_feedback
 
-    def download_attachment(self, attachment, feedback_id, pub_dir):
+    def download_attachment(self, attachment, feedback_item, publication_id, file_index):
         """Download a single attachment and optionally convert to markdown"""
         # Construct download URL from documentId
         document_id = attachment.get('documentId')
@@ -132,15 +131,30 @@ class EUFeedbackDownloader:
 
         url = f"{self.BASE_URL}/api/download/{document_id}"
 
-        # Create attachments subdirectory
-        attachments_dir = os.path.join(pub_dir, "attachments")
-        Path(attachments_dir).mkdir(exist_ok=True)
+        # Extract feedback metadata
+        feedback_id = feedback_item.get('id')
+        original_filename = attachment.get('fileName', 'unknown')
 
-        # Generate safe filename
-        filename = attachment.get('fileName', 'unknown')
-        # Add feedback ID to prevent collisions
-        safe_filename = f"feedback_{feedback_id}_{filename}"
-        filepath = os.path.join(attachments_dir, safe_filename)
+        # Extract user information for filename
+        organization = feedback_item.get('organization')
+        first_name = feedback_item.get('firstName', 'Unknown').replace(' ', '_')
+        surname = feedback_item.get('surname', 'Unknown').replace(' ', '_')
+        language = feedback_item.get('language', 'EN')
+
+        # Determine prefix for filename
+        if organization:
+            prefix = organization.replace(' ', '_').replace('/', '_').replace('\\', '_')
+        else:
+            prefix = f"{first_name}_{surname}"
+
+        # Clean prefix
+        prefix = prefix.replace('(', '').replace(')', '').replace('"', '').replace("'", '')
+
+        # Generate safe filename: (Prefix)_original_filename_LANG_INDEX.ext
+        base_name = Path(original_filename).stem
+        extension = Path(original_filename).suffix
+        safe_filename = f"({prefix})_{base_name}_{language}_{file_index}{extension}"
+        filepath = os.path.join(self.output_dir, safe_filename)
 
         try:
             response = self.session.get(url, timeout=60)
@@ -153,10 +167,10 @@ class EUFeedbackDownloader:
             if self.convert_to_markdown and self.converter:
                 self._convert_attachment_to_markdown(filepath)
 
-            return filepath
+            return filepath, safe_filename
         except Exception as e:
-            print(f"    ✗ Failed to download {filename}: {e}")
-            return None
+            print(f"    ✗ Failed to download {original_filename}: {e}")
+            return None, None
 
     def _convert_attachment_to_markdown(self, filepath):
         """Convert downloaded attachment to markdown if supported"""
@@ -187,31 +201,8 @@ class EUFeedbackDownloader:
             print("  No feedback available for this publication")
             return
 
-        # Create publication directory
-        pub_dir = os.path.join(self.output_dir, f"publication_{pub_id}")
-        Path(pub_dir).mkdir(exist_ok=True)
-
         # Get all feedback
         all_feedback = self.get_all_feedback(pub_id)
-
-        # Add context to each feedback item for consolidated output
-        for feedback in all_feedback:
-            feedback_with_context = {
-                'initiative_id': self.initiative_id,
-                'initiative_title': initiative_metadata.get('shortTitle'),
-                'initiative_reference': initiative_metadata.get('reference'),
-                'publication_id': pub_id,
-                'publication_type': pub_type,
-                'feedback': feedback
-            }
-            self.all_feedback_consolidated.append(feedback_with_context)
-
-        # Save feedback metadata
-        feedback_file = os.path.join(pub_dir, "feedback_metadata.json")
-        with open(feedback_file, 'w', encoding='utf-8') as f:
-            json.dump(all_feedback, f, indent=2, ensure_ascii=False)
-
-        print(f"\n✓ Saved {len(all_feedback)} feedback items to {feedback_file}")
 
         # Download attachments if enabled
         attachment_count = 0
@@ -229,10 +220,37 @@ class EUFeedbackDownloader:
                         att_name = att.get('fileName', 'unknown')
                         print(f"    Downloading: {att_name}")
 
-                        filepath = self.download_attachment(att, feedback_id, pub_dir)
+                        filepath, safe_filename = self.download_attachment(att, feedback, pub_id, len(self.file_index) + 1)
                         if filepath:
-                            print(f"    ✓ Saved to: {os.path.relpath(filepath, self.output_dir)}")
+                            print(f"    ✓ Saved to: {safe_filename}")
                             attachment_count += 1
+
+                            # Add to file index
+                            file_entry = {
+                                'index': len(self.file_index) + 1,
+                                'filename': safe_filename,
+                                'original_filename': att.get('fileName'),
+                                'feedback_id': feedback_id,
+                                'date': feedback.get('dateFeedback'),
+                                'user_type': feedback.get('userType'),
+                                'organization': feedback.get('organization'),
+                                'first_name': feedback.get('firstName'),
+                                'surname': feedback.get('surname'),
+                                'country': feedback.get('country'),
+                                'language': feedback.get('language'),
+                                'publication_id': pub_id
+                            }
+                            self.file_index.append(file_entry)
+
+                            # Add to download results
+                            result_entry = {
+                                'feedback_id': feedback_id,
+                                'document_id': att.get('documentId'),
+                                'filename': att.get('fileName'),
+                                'path': f"attachments/{self.initiative_id}/{feedback_id}/{att.get('fileName')}",
+                                'status': 'success'
+                            }
+                            self.download_results.append(result_entry)
 
                     time.sleep(0.3)  # Rate limiting
 
@@ -242,19 +260,6 @@ class EUFeedbackDownloader:
             for feedback in all_feedback:
                 attachment_count += len(feedback.get('attachments', []))
             print(f"\n  Skipped downloading {attachment_count} attachments (use --download-attachments to enable)")
-
-        # Create summary
-        summary = {
-            'publication_id': pub_id,
-            'publication_type': pub_type,
-            'total_feedback': len(all_feedback),
-            'total_attachments': attachment_count,
-            'attachments_downloaded': self.download_attachments
-        }
-
-        summary_file = os.path.join(pub_dir, "summary.json")
-        with open(summary_file, 'w', encoding='utf-8') as f:
-            json.dump(summary, f, indent=2)
 
     def download_all(self):
         """Main method to download everything"""
@@ -279,57 +284,50 @@ class EUFeedbackDownloader:
         for publication in publications:
             self.process_publication(publication, initiative_data)
 
-        # Create consolidated output
-        self._create_consolidated_output(initiative_data)
+        # Create index and results files
+        self._create_index_files(initiative_data)
 
         print(f"\n{'='*70}")
         print(f"✓ Download complete!")
         print(f"All data saved to: {os.path.abspath(self.output_dir)}")
         print(f"{'='*70}\n")
 
-    def _create_consolidated_output(self, initiative_data):
-        """Create a consolidated JSON file with all feedback from all publications"""
-        if not self.all_feedback_consolidated:
-            print("\n  No feedback to consolidate")
-            return
-
-        # Build consolidated structure
-        consolidated = {
-            'metadata': {
-                'initiative_id': self.initiative_id,
-                'initiative_title': initiative_data.get('shortTitle'),
-                'initiative_reference': initiative_data.get('reference'),
-                'total_publications': len(initiative_data.get('publications', [])),
-                'total_feedback_items': len(self.all_feedback_consolidated),
-                'download_date': time.strftime('%Y-%m-%d %H:%M:%S'),
-                'attachments_downloaded': self.download_attachments
-            },
-            'publications_summary': [],
-            'feedback': self.all_feedback_consolidated
+    def _create_index_files(self, initiative_data):
+        """Create index.json and download_results.json files"""
+        # Create index.json
+        index_data = {
+            'initiative_id': self.initiative_id,
+            'initiative_title': initiative_data.get('shortTitle'),
+            'total_files': len(self.file_index),
+            'files': self.file_index
         }
 
-        # Add publication summaries
-        pub_summary = {}
-        for item in self.all_feedback_consolidated:
-            pub_id = item['publication_id']
-            if pub_id not in pub_summary:
-                pub_summary[pub_id] = {
-                    'publication_id': pub_id,
-                    'publication_type': item['publication_type'],
-                    'feedback_count': 0
-                }
-            pub_summary[pub_id]['feedback_count'] += 1
+        index_file = os.path.join(self.output_dir, "index.json")
+        with open(index_file, 'w', encoding='utf-8') as f:
+            json.dump(index_data, f, indent=2, ensure_ascii=False)
 
-        consolidated['publications_summary'] = list(pub_summary.values())
+        print(f"\n✓ Created index file: {index_file}")
+        print(f"  Total files indexed: {len(self.file_index)}")
 
-        # Save consolidated file
-        consolidated_file = os.path.join(self.output_dir, "consolidated_feedback.json")
-        with open(consolidated_file, 'w', encoding='utf-8') as f:
-            json.dump(consolidated, f, indent=2, ensure_ascii=False)
+        # Create download_results.json
+        if self.download_attachments and self.download_results:
+            from datetime import datetime, timezone
+            results_data = {
+                'source_file': f"initiative_{self.initiative_id}_all_feedback.json",
+                'downloaded_at': datetime.now(timezone.utc).isoformat(),
+                'summary': {
+                    'successful': len([r for r in self.download_results if r['status'] == 'success']),
+                    'skipped': len([r for r in self.download_results if r['status'] == 'skipped']),
+                    'failed': len([r for r in self.download_results if r['status'] == 'failed'])
+                },
+                'results': self.download_results
+            }
 
-        print(f"\n✓ Created consolidated feedback file: {consolidated_file}")
-        print(f"  Total feedback items: {len(self.all_feedback_consolidated)}")
-        print(f"  Publications with feedback: {len(pub_summary)}")
+            results_file = os.path.join(self.output_dir, "download_results.json")
+            with open(results_file, 'w', encoding='utf-8') as f:
+                json.dump(results_data, f, indent=2, ensure_ascii=False)
+
+            print(f"✓ Created download results file: {results_file}")
 
 
 def main():
@@ -364,7 +362,7 @@ Conversion requirements:
     parser.add_argument('initiative_id', type=str,
                         help='Initiative ID from the Better Regulation Portal URL')
     parser.add_argument('-o', '--output-dir', type=str,
-                        help='Custom output directory (default: initiative_<id>_feedback)')
+                        help='Custom output directory (default: feedback_data/<id>)')
     parser.add_argument('--download-attachments', action='store_true',
                         help='Download attachment files (default: metadata only)')
     parser.add_argument('--convert-to-markdown', action='store_true',

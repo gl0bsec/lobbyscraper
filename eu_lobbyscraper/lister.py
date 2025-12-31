@@ -19,10 +19,11 @@ class EUInitiativeLister:
 
     BASE_URL = "https://ec.europa.eu/info/law/better-regulation"
 
-    def __init__(self, output_file="all_initiatives.json", verbose=True, download_feedback=False):
+    def __init__(self, output_file="all_initiatives.json", verbose=True, download_feedback=False, count_feedback_only=False):
         self.output_file = output_file
         self.verbose = verbose
         self.download_feedback = download_feedback
+        self.count_feedback_only = count_feedback_only
         self.session = requests.Session()
         self.session.headers.update({
             'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36'
@@ -217,8 +218,8 @@ class EUInitiativeLister:
                 init['currentStage'] = latest_status.get('frontEndStage')
 
             # Download feedback metadata if requested
-            if self.download_feedback:
-                self.log(f"  [{i}/{len(initiatives)}] Downloading feedback for initiative {int(init_id)}...")
+            if self.download_feedback or self.count_feedback_only:
+                self.log(f"  [{i}/{len(initiatives)}] {'Counting' if self.count_feedback_only else 'Downloading'} feedback for initiative {int(init_id)}...")
 
                 # First get full initiative details to access publications
                 full_details = self.get_initiative_details(init_id)
@@ -230,23 +231,31 @@ class EUInitiativeLister:
                     for pub in publications:
                         pub_id = pub.get('id')
                         pub_feedback_count = pub.get('totalFeedback', 0)
+                        total_feedback_count += pub_feedback_count
 
-                        if pub_id and pub_feedback_count > 0:
+                        if self.count_feedback_only:
+                            # Only store the count, not the actual feedback items
+                            pub['feedbackItems'] = []
+                        elif pub_id and pub_feedback_count > 0:
+                            # Download actual feedback items
                             feedback = self.get_feedback_for_publication(pub_id)
                             pub['feedbackItems'] = feedback
-                            total_feedback_count += len(feedback)
                             self.log(f"    Publication {pub_id}: {len(feedback)} feedback items")
                         else:
                             pub['feedbackItems'] = []
 
                     # Store publications with feedback in the initiative
                     init['publications'] = publications
-                    init['totalFeedbackDownloaded'] = total_feedback_count
+                    init['totalFeedbackCount'] = total_feedback_count
+                    if not self.count_feedback_only:
+                        init['totalFeedbackDownloaded'] = sum(len(pub.get('feedbackItems', [])) for pub in publications)
                     if total_feedback_count > 0:
-                        self.log(f"    ✓ Total feedback for initiative: {total_feedback_count}")
+                        self.log(f"    ✓ Total feedback count: {total_feedback_count}")
                 else:
                     init['publications'] = []
-                    init['totalFeedbackDownloaded'] = 0
+                    init['totalFeedbackCount'] = 0
+                    if not self.count_feedback_only:
+                        init['totalFeedbackDownloaded'] = 0
 
         self.log(f"\n✓ Enriched {len(initiatives)} initiatives")
         return initiatives
@@ -302,6 +311,7 @@ class EUInitiativeLister:
             'feedbackStatus',
             'feedbackStartDate',
             'feedbackEndDate',
+            'totalFeedbackCount',
             'currentStage'
         ]
 
@@ -323,6 +333,7 @@ class EUInitiativeLister:
                     'feedbackStatus': init.get('feedbackStatus', ''),
                     'feedbackStartDate': init.get('feedbackStartDate', ''),
                     'feedbackEndDate': init.get('feedbackEndDate', ''),
+                    'totalFeedbackCount': init.get('totalFeedbackCount', ''),
                     'currentStage': init.get('currentStage', '')
                 }
 

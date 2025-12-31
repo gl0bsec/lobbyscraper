@@ -51,6 +51,7 @@ data/
 engine/
 *.json
 *.csv
+*.pdf
 !docs/*.json
 !docs/*.csv
 
