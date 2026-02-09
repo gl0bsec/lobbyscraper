@@ -1,0 +1,151 @@
+====================================================================================================
+ORGANIZATION MATCHING REVIEW REPORT
+Dataset: 3d_embedded_data(matched).csv
+====================================================================================================
+
+SECTION 1: CORRECTED FALSE POSITIVES
+----------------------------------------------------------------------------------------------------
+These entries were incorrectly matched and have been corrected to 'unmatched'.
+
+Organization: ACEA (European Automobile Manufacturers' Association)
+Was matched to: 
+Status: NOW UNMATCHED
+Reason: Different organizations with similar abbreviations
+
+
+====================================================================================================
+SECTION 2: LIKELY INCORRECT MATCHES (High Priority Review)
+----------------------------------------------------------------------------------------------------
+These matches are probably wrong and should be manually verified.
+
+Organization: Criteo
+Matched to: Citeo
+Match Type: fuzzy | Confidence: 0.909
+Action needed: Manual verification required
+
+Organization: IAB Europe
+Matched to: HIAS Europe
+Match Type: fuzzy | Confidence: 0.857
+Action needed: Manual verification required
+
+
+====================================================================================================
+SECTION 3: DIFFERENT LEGAL ENTITIES (Same Name)
+----------------------------------------------------------------------------------------------------
+Same organization name but different legal entity types.
+
+Organization: Dedalus S.p.A.
+Matched to: Dedalus Cooperativa sociale
+Match Type: normalized | Confidence: 1.000
+Action needed: Verify if these are the same organization or related entities
+
+
+====================================================================================================
+SECTION 4: CROSS-COUNTRY MATCHES (Medium Priority Review)
+----------------------------------------------------------------------------------------------------
+Matches found across different countries - may be correct regional entities.
+
+Organization: Dun & Bradstreet
+Matched to: Dun & Bradstreet Belgium NV
+Match Type: cross_country | Confidence: 0.850
+
+Organization: Amazon
+Matched to: Amazon Europe Core SARL
+Match Type: cross_country | Confidence: 0.850
+
+Organization: Lenovo
+Matched to: Lenovo Group Limited
+Match Type: cross_country | Confidence: 0.850
+
+Organization: Centre for Information Policy Leadership (CIPL)
+Matched to: Centre for Information Policy Leadership (CIPL) at Hunton Andrews Kurth LLP
+Match Type: cross_country | Confidence: 0.850
+
+
+====================================================================================================
+SECTION 5: FUZZY MATCHES (Lower Priority Review)
+----------------------------------------------------------------------------------------------------
+Matches based on similarity - generally correct but should be spot-checked.
+
+Organization: ECIS, European Committee for Interoperable Systems
+Matched to: European Committee for Interoperable Systems
+Confidence: 0.946
+
+Organization: The Guild of European Research-Instensive Universities
+Matched to: The Guild of European Research-Intensive Universities
+Confidence: 0.991
+
+Organization: The European Crypto Initiative (EUCI)
+Matched to: European Crypto Initiative
+Confidence: 0.929
+
+Organization: FEDIL, the Voice of the Luxembourg's Industry
+Matched to: FEDIL - The Voice of Luxembourg's Industry
+Confidence: 0.952
+
+Organization: DER MITTELSTANDSVERBUND - ZGV e.V.
+Matched to: DER MITTELSTANDSVERBUND
+Confidence: 0.920
+
+Organization: AER - Association of European Radios
+Matched to: Association of European Radios
+Confidence: 0.938
+
+Organization: MVFP Medienverband der freien Presse e.V.
+Matched to: Medienverband der freien Presse e.V.
+Confidence: 0.925
+
+Organization: Zentralverband der deutschen Werbewirtschaft (ZAW)
+Matched to: Zentralverband der deutschen Werbewirtschaft ZAW e.V.
+Confidence: 0.957
+
+Organization: EFCA - European Federation of Engineering Consultancy Associations
+Matched to: European Federation of Engineering Consultancy Associations
+Confidence: 0.959
+
+Organization: FERMA - Federation of European Risk Managers Associations
+Matched to: Federation of European Risk Management Associations
+Confidence: 0.887
+
+Organization: American Chamber of Commerce to the EU
+Matched to: American Chamber of Commerce to the European Union
+Confidence: 0.864
+
+Organization: COCIR - European Coordination Committee of the Radiological, Electromedical and healthcare IT Industry
+Matched to: European Coordination Committee of the Radiological, Electromedical and healthcare IT Industry
+Confidence: 0.969
+
+Organization: ENNHRI - European Network of National Human Rights Institutions
+Matched to: European Network of National Human Rights Institutions
+Confidence: 0.939
+
+Organization: European network of equality bodies (Equinet)
+Matched to: Equinet - the European Network of Equality Bodies
+Confidence: 0.854
+
+Organization: Bundesverband der Unternehmen der Künstlichen Intelligenz in Deutschland e.V. (German AI Association)
+Matched to: Bundesverband der Unternehmen der Künstlichen Intelligenz in Deutschland e.V.
+Confidence: 0.973
+
+Organization: EUROMOT - The European Association of Internal Combustion Engine and Alternative Powertrain Manufacturers
+Matched to: European Association of Internal Combustion Engine and Alternative Powertrain Manufacturers
+Confidence: 0.938
+
+Organization: European Associations of Co-operative Banks (EACB)
+Matched to: European Association of Co-operative Banks
+Confidence: 0.988
+
+Organization: European Tyres and Rubber Manufacturers' Association
+Matched to: European Tyre & Rubber Manufacturers' Association
+Confidence: 0.948
+
+
+====================================================================================================
+SUMMARY STATISTICS
+----------------------------------------------------------------------------------------------------
+Total flagged for review: 26
+  - False positives corrected: 1
+  - Likely incorrect (needs correction): 2
+  - Different legal entities: 1
+  - Cross-country matches to verify: 4
+  - Fuzzy matches to spot-check: 18

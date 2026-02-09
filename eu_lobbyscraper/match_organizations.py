@@ -332,33 +332,12 @@ class OrganizationMatcher:
                 matched_rows.append(enriched_row)
 
         # Write output CSV with intuitive column order
-        # Group 1: Matching status
-        # Group 2: Core feedback identifiers
-        # Group 3: Submitter information (from feedback)
-        # Group 4: Matched organization details (from transparency register)
-        # Group 5: Content and metadata
-        output_headers = [
-            # Matching status
+        # Dynamically build headers: preserve all input columns + new matching columns
+        # New matching columns to add
+        new_matching_columns = [
             'matched?',
             'match_type',
             'match_confidence',
-
-            # Core identifiers
-            'feedback_id',
-            'publication_id',
-            'publication_reference',
-            'publication_type',
-            'date',
-
-            # Submitter info (from feedback)
-            'user_type',
-            'first_name',
-            'surname',
-            'organization',
-            'country',
-            'company_size',
-
-            # Matched organization details (from transparency register)
             'transparency_id',
             'transparency_name',
             'org_category',
@@ -369,19 +348,13 @@ class OrganizationMatcher:
             'org_fields_of_interest',
             'org_costs',
             'org_meetings',
-
-            # Content and metadata
-            'language',
-            'status',
-            'feedback_text',
-            'feedback_translated',
-            'tr_number',
-            'attachment_count',
-            'attachment_filenames',
         ]
 
+        # Preserve all input columns and add new ones at the beginning
+        output_headers = new_matching_columns + [col for col in feedback_headers if col not in new_matching_columns]
+
         with open(output_path, 'w', newline='', encoding='utf-8') as f:
-            writer = csv.DictWriter(f, fieldnames=output_headers)
+            writer = csv.DictWriter(f, fieldnames=output_headers, extrasaction='ignore')
             writer.writeheader()
             writer.writerows(matched_rows)
 

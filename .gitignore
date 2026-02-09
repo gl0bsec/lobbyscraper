@@ -55,6 +55,9 @@ engine/
 !docs/*.json
 !docs/*.csv
 
+# Scripts directory can contain tracked Python files
+!scripts/*.py
+
 # Temporary files
 *.tmp
 *.log
