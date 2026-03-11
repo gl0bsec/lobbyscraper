@@ -33,6 +33,34 @@ N matched = count of rows with `matched? = yes`; avg costs = mean of `org_costs`
 
 ---
 
+## Top Organisations by Meetings
+
+Matched respondents only. Meetings = declared number of meetings with EU institutions in the Transparency Register. Deduplicated by organisation (max value taken where an org appears in multiple clusters).
+
+| Meetings | Organisation |
+|---:|---|
+| 435 | BUSINESSEUROPE |
+| 355 | Google |
+| 286 | Airbus |
+| 276 | Bureau Européen des Unions de Consommateurs |
+| 222 | Meta Platforms Ireland Limited and its various subsidiaries |
+
+---
+
+## Top Organisations by Declared Lobbying Costs
+
+Matched respondents only; restricted to organisations declared as "Promotes their own interests or the collective interests of their members" (Cat2) to exclude think tanks and public bodies, whose cost field reflects total organisational budget rather than lobbying expenditure. Costs = midpoint of declared cost range in the Transparency Register (€).
+
+| Declared costs (€) | Organisation |
+|---:|---|
+| 9,500,000 | Meta Platforms Ireland Limited and its various subsidiaries |
+| 7,500,000 | Bayer AG |
+| 6,250,000 | Insurance Europe |
+| 6,250,000 | Google |
+| 6,250,000 | BUSINESSEUROPE |
+
+---
+
 ## Respondent Types
 
 Total dataset: 374 documents.
