@@ -15,6 +15,7 @@ import argparse
 import csv
 import re
 import sys
+import unicodedata
 from difflib import SequenceMatcher
 from pathlib import Path
 from typing import Optional, Dict, List, Tuple
@@ -47,6 +48,10 @@ def normalize_org_name(name: str) -> str:
 
     # Convert to lowercase
     name = name.lower().strip()
+
+    # Fold Unicode to ASCII (strips accents, diacritics) so e.g.
+    # "Österreich" == "Osterreich" and "Économie" == "Economie"
+    name = unicodedata.normalize("NFKD", name).encode("ascii", "ignore").decode()
 
     # Remove common legal suffixes (order matters - remove longer patterns first)
     legal_suffixes = [
@@ -87,8 +92,14 @@ def normalize_org_name(name: str) -> str:
         r'\s+llp$',
         r'\s+oy$',
         r'\s+oyj$',
+        r'\s+ry$',            # Finnish registered association
         r'\s+as$',
         r'\s+aps$',
+        r'\s+a\.i\.s\.b\.l\.?$',
+        r'\s+aisbl$',         # Belgian international non-profit
+        r'\s+a\.g\.?$',
+        r'\s+se$',            # European company (Societas Europaea)
+        r'\s+eeig$',          # European Economic Interest Grouping
     ]
 
     for suffix in legal_suffixes:
@@ -128,6 +139,7 @@ class OrganizationMatcher:
         self.orgs_by_exact_name: Dict[str, dict] = {}
         self.orgs_by_normalized_name: Dict[str, dict] = {}
         self.orgs_by_country: Dict[str, List[Tuple[str, str, dict]]] = {}
+        self.all_orgs: List[Tuple[str, str, dict]] = []  # global list for cross-country passes
 
         # Statistics
         self.stats = {
@@ -164,6 +176,9 @@ class OrganizationMatcher:
                 if country not in self.orgs_by_country:
                     self.orgs_by_country[country] = []
                 self.orgs_by_country[country].append((name, norm_name, row))
+
+                # Global list for cross-country passes
+                self.all_orgs.append((name, norm_name, row))
 
         print(f"Loaded {len(self.orgs_by_exact_name)} organizations from transparency register")
         print(f"  Countries: {len(self.orgs_by_country)}")
@@ -218,36 +233,63 @@ class OrganizationMatcher:
         if best_match:
             return best_match, 'fuzzy', best_score
 
-        # Strategy 4: Starts-with match (feedback name is prefix of register name)
-        for orig_name, org_norm_name, org_data in country_orgs:
-            # Check if feedback is a clean prefix (whole words only)
-            # Avoid false positives with very short names
-            if len(norm_name) >= 4:
-                # Check if register name starts with feedback name followed by space
+        # Strategy 4: Starts-with match (within same country, both directions)
+        # Min 4 chars — safe given the trailing-space boundary check.
+        if len(norm_name) >= 4:
+            for orig_name, org_norm_name, org_data in country_orgs:
+                # Forward: register name starts with submission name
+                # e.g. "GSMA" → "GSMA Europe", "noyb" → "noyb - European Center for Digital Rights"
                 if org_norm_name.startswith(norm_name + ' ') or org_norm_name == norm_name:
                     return org_data, 'starts_with', 0.95
+                # Reverse: submission name starts with register name
+                # e.g. "Nordic Financial Unions - the Nordic..." → "Nordic Financial Unions"
+                # e.g. "Bundesverband der Deutschen Industrie (BDI) / ..." → "Bundesverband der Deutschen Industrie"
+                if len(org_norm_name) >= 5 and (
+                    norm_name.startswith(org_norm_name + ' ') or norm_name == org_norm_name
+                ):
+                    return org_data, 'starts_with', 0.95
 
-        # Strategy 5: Cross-country fallback (exact or normalized match globally)
-        # Only try if we have a reasonably specific name (avoid matching generic terms)
-        if len(norm_name) >= 4:
-            # Try normalized match across all countries
-            if norm_name in self.orgs_by_normalized_name:
-                # Already checked this in strategy 2, but being explicit
-                pass
+        # Strategy 5: Cross-country fallback
+        # Only try if we have a reasonably specific name (min 5 chars)
+        if len(norm_name) >= 5:
+            for orig_name, org_norm_name, org_data in self.all_orgs:
+                # Skip orgs already scanned in the within-country passes
+                org_country = org_data.get('Country', '').strip().upper()
+                if org_country == country_full:
+                    continue
 
-            # Try starts-with match globally
-            for country, orgs in self.orgs_by_country.items():
-                if country == country_full:
-                    continue  # Already checked this country
+                # Exact normalized match in different country
+                if norm_name == org_norm_name:
+                    return org_data, 'cross_country', 0.90
 
-                for orig_name, org_norm_name, org_data in orgs:
-                    # Exact normalized match in different country
-                    if norm_name == org_norm_name:
-                        return org_data, 'cross_country', 0.90
-
-                    # Starts-with match in different country (lower confidence)
-                    if len(norm_name) >= 6 and (org_norm_name.startswith(norm_name + ' ') or org_norm_name == norm_name):
+                # Starts-with in either direction, cross-country (min 6 chars)
+                if len(norm_name) >= 6 and len(org_norm_name) >= 6:
+                    if org_norm_name.startswith(norm_name + ' '):
                         return org_data, 'cross_country', 0.85
+                    if norm_name.startswith(org_norm_name + ' '):
+                        return org_data, 'cross_country', 0.85
+
+            # Global fuzzy fallback: try all countries when within-country fuzzy failed.
+            # Uses a raised threshold (max of user threshold and 0.88) to limit false
+            # positives that arise from matching against a much larger candidate pool.
+            global_fuzzy_threshold = max(self.fuzzy_threshold, 0.88)
+            best_match = None
+            best_score = global_fuzzy_threshold
+
+            for orig_name, org_norm_name, org_data in self.all_orgs:
+                org_country = org_data.get('Country', '').strip().upper()
+                if org_country == country_full:
+                    continue  # already covered by within-country fuzzy above
+                # Pre-filter: skip if length difference is too large
+                if abs(len(org_norm_name) - len(norm_name)) > 25:
+                    continue
+                score = similarity_ratio(norm_name, org_norm_name)
+                if score > best_score:
+                    best_score = score
+                    best_match = org_data
+
+            if best_match:
+                return best_match, 'cross_country', best_score
 
         return None, 'no_match', 0.0
 
