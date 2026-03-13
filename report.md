@@ -61,6 +61,96 @@ Matched respondents only; restricted to organisations declared as "Promotes thei
 
 ---
 
+## Notable Organisations by Cluster
+
+Up to 10 organisations per cluster, ranked by prominence (meetings with EU institutions × 10,000 + log-scaled lobbying costs; matched organisations ranked above unmatched). Cluster names as assigned by BERTopic; unnamed clusters reflect insufficient label coherence.
+
+**Cluster 10: Compliance concerns (42)**
+
+**__Notable orgs__**: BUSINESSEUROPE, European Automobile Manufacturers' Association, Bundesverband der Deutschen Industrie e.V., DIGITALEUROPE, American Chamber of Commerce to the European Union, Telefonica S.A., Volkswagen Aktiengesellschaft, Siemens AG, Orange, Bayerische Motoren Werke Aktiengesellschaft
+
+**Cluster 18: Cyber concerns (27)**
+
+**__Notable orgs__**: European Express Association, CLOUD INFRASTRUCTURE SERVICES PROVIDERS IN EUROPE, Palo Alto Networks Inc., Meetic Group (a Match Group Company), Kaspersky Labs Limited, Dansk Standard, Trellix, European Committee for Standardization, Confederation of European Security Services, International Information System Security Certification Consortium Inc.
+
+**Cluster 6: Ad businesses (24)**
+
+**__Notable orgs__**: EBU-UER (European Broadcasting Union), European Magazine Media Association, Association of Commercial Television and Video on Demand Services in Europe, European Publishers Council, Center for Countering Digital Hate Ltd., News Media Europe, Interactive Advertising Bureau Europe, World Federation of Advertisers, Bundesverband Digitalpublisher und Zeitungsverleger, MFE - MEDIAFOREUROPE N.V
+
+**Cluster 3: UNNAMED (20)**
+
+**__Notable orgs__**: FEDIL - The Voice of Luxembourg's Industry, Almega, Prosus, Delivery Platforms Europe, European Justice Forum, European Games Developer Federation, DOCUSIGN INC, U.S. Chamber of Commerce
+
+**Cluster 9: Risk & consent, simplification, compliance costs (19)**
+
+**__Notable orgs__**: Google, Amazon Europe Core SARL, Uber, Ingka Services A.B., DOT Europe, Ecommerce Europe, Inter Ikea Systems BV, Dassault Systèmes, European Tech Alliance, Computer and Communications Industry Association
+
+**Cluster 2: Compliance costs, legal certainty, metadata use (16)**
+
+**__Notable orgs__**: Eurosmart, European Signature Dialog - Associated European Trust Centers, InfoCert SpA, Namirial S.p.A., European Crypto Initiative, Capgemini Deutschland GmbH, D-Trust, DigitalTrade4.EU, Entrust SAS, Evotrust
+
+**Cluster 7: Consent and rights advocacy (16)**
+
+**__Notable orgs__**: Bureau Européen des Unions de Consommateurs, noyb - European Center for Digital Rights, European Law Institute, Agilitation, AI Accountability Lab, Trinity College Dublin, Alexander von Humboldt Institute for Internet and Society, Alliance for Responsible Data Collection, CNIL (French Data Protection Authority), eyeo GmbH
+
+**Cluster 13: Ethics, risk and human rights (15)**
+
+**__Notable orgs__**: Airbus, Danish Institute for Human Rights, European Disability Forum, Democracy Reporting International, Equinet - the European Network of Equality Bodies, LinkedIn Ireland, European Network of National Human Rights Institutions, Centre for Democracy & Technology Europe, Lenovo Group Limited, IDEMIA France
+
+**Cluster 11: Health and biotech, device focus (13)**
+
+**__Notable orgs__**: MedTech Europe, Koninklijke Philips, ENEDIS, Siemens Healthineers AG, European Coordination Committee of the Radiological Electromedical and healthcare IT Industry, European Hearing Instrument Manufacturers Association, Zimmer Biomet Holdings, BioMed Alliance, BVMed - Bundesverband Medizintechnologie e.V., DigiFinland
+
+**Cluster 4: Innovation, legal certainty and compliance costs (12)**
+
+**__Notable orgs__**: Meta Platforms Ireland Limited and its various subsidiaries, IBM Corporation, Bolt, SAP, Workday, Broadcom, Skyscanner Limited, TIC Council, DER MITTELSTANDSVERBUND, Open-Xchange AG
+
+**Cluster 12: Domestic growth/competitiveness, digital sovereignty (12)**
+
+**__Notable orgs__**: AIM - European Brands Association, Standing Committee of European Doctors, Independent Retail Europe, Shopify Inc., European Entrepreneurs CEA-PME, European Travel Retail Confederation, European DIGITAL SME Alliance, Zentralverband Deutsches Baugewerbe, FREE ICT EUROPE FOUNDATION
+
+**Cluster 19: CRA and other reporting obligations (12)**
+
+**__Notable orgs__**: Bayer AG, SGI Europe, Wirtschaftskammer Österreich, France Digitale, Decathlon SE, Wolt Enterprises, Irish Farmers' Association, OpenAI OpCo LLC, Data & Technology For Compliance Alliance, Charter of Trust
+
+**Cluster 5: Digital rights advocacy (11)**
+
+**__Notable orgs__**: Verbraucherzentrale Bundesverband, European Partnership for Democracy, European Digital Rights, Access Now Europe, Video Games Europe, epicenter.works - Plattform Grundrechtspolitik, Culture Action Europe, The International Confederation of Music Publishers, Vorwerk SE & Co. KG, People vs Big Tech
+
+**Cluster 16: Financial, municipal and legal services (10)**
+
+**__Notable orgs__**: Association for Financial Markets in Europe, European Banking Federation, Mastercard Europe, London Stock Exchange Group, European Association of Co-operative Banks, European Savings and Retail Banking Group, ING Group, Eurofinas, Asociación Nacional de Establecimientos Financieros de Crédito (ASNEF), Asociación de Instituciones de Inversión Colectiva y Fondos de Pensiones
+
+**Cluster 21: UNNAMED (10)**
+
+**__Notable orgs__**: Vereinigung der österreichischen Industrie - Industriellenvereinigung, BSA | The Software Alliance, Centre for Information Policy Leadership (CIPL) at Hunton Andrews Kurth LLP, The European Association of On-Demand Mobility, Siinda, Dawex, Dedalus S.p.A., Global Data Alliance, Plateforme de la filière Automobile
+
+**Cluster 1: UNNAMED (9)**
+
+**__Notable orgs__**: The Guild of European Research-Intensive Universities, Deutscher Anwaltverein (German Bar Association), ESOMAR, Bundesverband Großhandel Außenhandel Dienstleistungen e.V., EuroGeographics, AK Wien, BUGLAS e.V., Chamber of Commerce and Industry for Munich and Upper Bavaria, Doctrine
+
+**Cluster 17: Financial, municipal and legal services (8)**
+
+**__Notable orgs__**: EUROCHAMBRES – Association of European Chambers of Commerce and Industry, Local Government Denmark, Indeed, Österreichische Notariatskammer, Clever Cloud, Council of European Municipalities and Regions (CEMR), Digital Poland Association
+
+**Cluster 15: Financial industry, CRA and other reporting obligations (7)**
+
+**__Notable orgs__**: Federation of European Securities Exchanges, Association Luxembourgeoise des Fonds d'Investissement, PensionsEurope, Assuralia, All Terrain Vehicle Industry European Association, European Association of Internal Combustion Engine and Alternative Powertrain Manufacturers, IDRS Platform
+
+**Cluster 20: UNNAMED (6)**
+
+**__Notable orgs__**: European Tyre & Rubber Manufacturers' Association, CIO Platform Nederland, eco - Verband der Internetwirtschaft, Government Office of the Czech Republic, Luxembourg Ministère d'État
+
+**Cluster 8: UNNAMED (5)**
+
+**__Notable orgs__**: ENEL SpA, ENGIE, European Federation of Engineering Consultancy Associations, Elia Transmission Belgium, Federation of European Risk Management Associations
+
+**Cluster 14: UNNAMED (5)**
+
+**__Notable orgs__**: TikTok Technology Ltd, Salesforce Inc., Mistral AI, Bundesverband der Unternehmen der Künstlichen Intelligenz in Deutschland e.V., European AI Forum
+
+---
+
 ## Respondent Types
 
 Total dataset: 374 documents.
